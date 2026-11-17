@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Truth table to SOP and POS</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#F2F4F1;--ink:#16221D;--mute:#58695F;--line:#C9D4CD;--cell:#fff;--on:#1F8A63;--onink:#fff;--board:#0F3B2D;--boardink:#E4F1EA;--boardmute:#9CC2B0;--tin:#E8D48A;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1210;--ink:#E4EEE8;--mute:#93A59B;--line:#27352F;--cell:#131C18;--on:#2FB583;--onink:#06150E;--board:#12442F}}
+:root[data-theme="dark"]{--bg:#0C1210;--ink:#E4EEE8;--mute:#93A59B;--line:#27352F;--cell:#131C18;--on:#2FB583;--onink:#06150E;--board:#12442F}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 18px 48px}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
+.sub{margin:0 0 26px;color:var(--mute);max-width:56ch}
+.grid{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.card{background:var(--cell);border:1px solid var(--line);border-radius:10px;padding:16px}
+h2{font-size:15px;font-weight:600;margin:0 0 10px}
+.seg{display:flex;gap:6px;margin-bottom:14px}
+.seg button{flex:1;padding:8px 0;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;font:600 15px "IBM Plex Mono",monospace;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--on);border-color:var(--on);color:var(--onink)}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+.q{display:flex;gap:6px;margin-bottom:6px}
+.q input{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:14px "IBM Plex Mono",monospace}
+.q button,.clr{padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:600 14px "Bricolage Grotesque",sans-serif;cursor:pointer}
+.err{min-height:20px;font-size:13px;color:#C0392B;margin:0 0 8px}
+.tw{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font:14px "IBM Plex Mono",monospace;text-align:center}
+th{position:sticky;top:0;background:var(--cell);border-bottom:2px solid var(--ink);padding:6px 0;font-weight:600}
+td{padding:0;border-bottom:1px solid var(--line);height:30px}
+td.i{color:var(--mute);width:34px}
+td button{width:100%;height:30px;border:0;background:transparent;color:var(--ink);font:600 14px "IBM Plex Mono",monospace;cursor:pointer}
+td button[data-v="1"]{background:var(--on);color:var(--onink)}
+td button[data-v="2"]{background:repeating-linear-gradient(45deg,transparent 0 4px,var(--line) 4px 6px)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--on);outline-offset:2px}
+.hint{font-size:13px;color:var(--mute);margin:10px 0 0}
+.board{background:var(--board);color:var(--boardink);border-radius:12px;padding:22px}
+.board .blk+.blk{margin-top:20px;padding-top:18px;border-top:1px solid rgba(228,241,234,.18)}
+.board .lab{font-size:13px;color:var(--boardmute);margin-bottom:4px}
+.board .ex{font:600 clamp(20px,3.4vw,30px)/1.35 "IBM Plex Mono",monospace;color:var(--tin);overflow-wrap:anywhere}
+.board .sm{font:14px/1.5 "IBM Plex Mono",monospace;overflow-wrap:anywhere}
+.board .big .ex{font-size:clamp(24px,4vw,36px)}
+.circ{margin-top:20px}
+.cw{overflow-x:auto}
+.cw svg{display:block;min-width:520px;width:100%;height:auto}
+.w{fill:none;stroke:var(--mute);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.rl{stroke:var(--on)}
+.g{fill:var(--cell);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.d{fill:var(--ink)}
+.tx{fill:var(--ink);font:600 13px "IBM Plex Mono",monospace;text-anchor:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Truth table to SOP and POS</h1>
+<p class="sub">Set the outputs of your truth table and get the canonical and simplified expressions. Up to 5 variables.</p>
+<div class="grid">
+<section class="card" aria-label="Truth table">
+<h2>Variables</h2>
+<div class="seg" id="seg"></div>
+<label for="q">Quick entry</label>
+<div class="q"><input id="q" placeholder="m(3,5,6,7)  or  M(0,1,2,4)" autocomplete="off" spellcheck="false"><button id="apply">Apply</button></div>
+<p class="err" id="err" role="alert"></p>
+<div class="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div>
+<p class="hint">Click an output cell to cycle 0, 1, and X (don’t care). Add d(…) in quick entry for don’t cares, like m(1,3) d(5).</p>
+<p class="hint"><button class="clr" id="clr">Clear table</button></p>
+</section>
+<section class="board" aria-live="polite">
+<div class="blk big"><div class="lab">Simplified SOP</div><div class="ex" id="ssop"></div></div>
+<div class="blk big"><div class="lab">Simplified POS</div><div class="ex" id="spos"></div></div>
+<div class="blk"><div class="lab">Canonical SOP</div><div class="sm" id="csop"></div></div>
+<div class="blk"><div class="lab">Canonical POS</div><div class="sm" id="cpos"></div></div>
+</section>
+</div>
+<section class="card circ"><h2>Circuit for the simplified SOP</h2><div class="cw" id="csvg1"></div></section>
+<section class="card circ"><h2>Circuit for the simplified POS</h2><div class="cw" id="csvg2"></div></section>
+</div>
+<script>
+const NAMES=["A","B","C","D","E"];
+let n=3, vals=new Array(32).fill(0);
+const $=s=>document.querySelector(s);
+const bits=(i,len)=>i.toString(2).padStart(len,"0");
+const lit=(j,comp)=>NAMES[j]+(comp?"’":"");
+
+function qm(ones,dcs){
+  if(!ones.length) return [];
+  let cur=[...new Set([...ones,...dcs])].map(i=>bits(i,n));
+  const primes=new Set();
+  while(cur.length){
+    const used=new Set(), next=new Set();
+    for(let a=0;a<cur.length;a++) for(let b=a+1;b<cur.length;b++){
+      let d=-1, ok=true;
+      for(let k=0;k<n;k++){
+        if(cur[a][k]!==cur[b][k]){
+          if(cur[a][k]==="-"||cur[b][k]==="-"||d>=0){ok=false;break}
+          d=k;
+        }
+      }
+      if(ok&&d>=0){next.add(cur[a].slice(0,d)+"-"+cur[a].slice(d+1));used.add(a);used.add(b)}
+    }
+    cur.forEach((t,i)=>{if(!used.has(i))primes.add(t)});
+    cur=[...next];
+  }
+  const P=[...primes];
+  const covers=(p,m)=>{const s=bits(m,n);for(let k=0;k<n;k++)if(p[k]!=="-"&&p[k]!==s[k])return false;return true};
+  const cov=P.map(p=>new Set(ones.filter(m=>covers(p,m))));
+  const cost=p=>100+p.replace(/-/g,"").length;
+  let best=null, bestCost=Infinity;
+  (function rec(un,ch,c){
+    if(c>=bestCost) return;
+    if(!un.length){best=ch;bestCost=c;return}
+    let pick=null, opts=null;
+    for(const m of un){
+      const o=P.map((_,i)=>i).filter(i=>cov[i].has(m));
+      if(!opts||o.length<opts.length){pick=m;opts=o}
+    }
+    opts.sort((x,y)=>cov[y].size-cov[x].size);
+    for(const i of opts) rec(un.filter(m=>!cov[i].has(m)),ch.concat(i),c+cost(P[i]));
+  })(ones.slice(),[],0);
+  return best.map(i=>P[i]);
+}
+
+const sopText=imps=>{
+  if(!imps.length) return "0";
+  return imps.map(p=>{let s="";for(let k=0;k<n;k++)if(p[k]!=="-")s+=lit(k,p[k]==="0");return s||"1"}).join(" + ");
+};
+// imps describe F’ as a sum of products; complementing gives F as a product of sums
+const posText=imps=>{
+  if(!imps.length) return "1";
+  const sums=imps.map(p=>{const l=[];for(let k=0;k<n;k++)if(p[k]!=="-")l.push(lit(k,p[k]==="1"));return l});
+  if(sums.some(l=>!l.length)) return "0";
+  if(sums.length===1) return sums[0].join(" + ");
+  return sums.map(l=>l.length>1?"("+l.join(" + ")+")":l[0]).join("");
+};
+
+function termOf(p,cv){const t=[];for(let k=0;k<n;k++)if(p[k]!=="-")t.push({k,c:p[k]===cv});return t}
+function drawCircuit(terms,kind,sel){
+  const el=$(sel);
+  if(!terms.length||terms.some(t=>!t.length)){el.innerHTML='<p class="hint">F is a constant (0 or 1) here, so there is no circuit to draw.</p>';return}
+  const has=(k,c)=>terms.some(t=>t.some(l=>l.k===k&&l.c===c));
+  const used=[...new Set(terms.flat().map(l=>l.k))].sort((a,b)=>a-b);
+  const rx={};let cx=40;
+  used.forEach(k=>{const c=has(k,true),d=has(k,false);rx[k]={a:cx,c:c?cx+44:null,d};cx+=c?80:36});
+  const and1=kind==="sop",gw=and1?44:52,gw2=and1?52:44,t1=and1?"and":"or",t2=and1?"or":"and",m=terms.length;
+  const gate=(ty,x,y,h,w)=>ty==="and"?`<path class="g" d="M${x} ${y}H${x+w/2}A${w/2} ${h/2} 0 0 1 ${x+w/2} ${y+h}H${x}Z"/>`:`<path class="g" d="M${x} ${y}Q${x+w*.55} ${y} ${x+w} ${y+h/2}Q${x+w*.55} ${y+h} ${x} ${y+h}Q${x+w*.28} ${y+h/2} ${x} ${y}Z"/>`;
+  const inX=(ty,x,y,h,yi,w)=>{const u=(yi-y)/h;return ty==="or"?x+.56*w*u*(1-u):x};
+  const rail=l=>l.c?rx[l.k].c:rx[l.k].a;
+  const dot=(x,yy)=>`<circle class="d" cx="${x}" cy="${yy}" r="2.5"/>`;
+  let y=64;
+  const rows=terms.map(t=>{const h=t.length>1?Math.max(40,14*t.length+8):16,r={t,y,h};y+=h+18;return r});
+  const bottom=y-18,gx=cx+16;
+  let W="",G="",D="",T="";
+  rows.forEach(r=>{
+    r.cy=r.y+r.h/2;r.ox=gx+gw;
+    if(r.t.length===1){const x0=rail(r.t[0]);W+=`<path class="w" d="M${x0} ${r.cy}H${r.ox}"/>`;D+=dot(x0,r.cy)}
+    else{G+=gate(t1,gx,r.y,r.h,gw);r.t.forEach((l,i)=>{const yi=r.y+r.h*(i+1)/(r.t.length+1),x0=rail(l);W+=`<path class="w" d="M${x0} ${yi}H${inX(t1,gx,r.y,r.h,yi,gw)}"/>`;D+=dot(x0,yi)})}
+  });
+  let ox,oy;
+  if(m>1){
+    const sp=11,x2=gx+gw+30+m*sp,h2=Math.max(40,20*m+8),y2=(64+bottom)/2-h2/2;
+    G+=gate(t2,x2,y2,h2,gw2);
+    const ys=rows.map((r,j)=>y2+h2*(j+1)/(m+1));
+    const down=rows.map((r,j)=>ys[j]>r.cy+1),up=rows.map((r,j)=>ys[j]<r.cy-1);
+    const nd=down.filter(Boolean).length;
+    let di=0,ui=0;
+    rows.forEach((r,j)=>{
+      let slot=0;
+      if(down[j])slot=nd-1-di++;else if(up[j])slot=nd+ui++;
+      const xm=gx+gw+16+slot*sp;
+      W+=`<path class="w" d="M${r.ox} ${r.cy}H${xm}V${ys[j]}H${inX(t2,x2,y2,h2,ys[j],gw2)}"/>`;
+    });
+    ox=x2+gw2;oy=y2+h2/2;
+  }else{ox=rows[0].ox;oy=rows[0].cy}
+  W+=`<path class="w" d="M${ox} ${oy}H${ox+44}"/>`;
+  T+=`<text class="tx" x="${ox+60}" y="${oy+5}">F</text>`;
+  const yb=bottom+10;
+  used.forEach(k=>{
+    const r=rx[k];
+    T+=`<text class="tx" x="${r.a}" y="14">${NAMES[k]}</text>`;
+    W+=`<path class="w rl" d="M${r.a} 22V${r.d?yb:40}"/>`;
+    if(r.c){
+      D+=dot(r.a,40);
+      G+=`<path class="g" d="M${r.a+8} 33V47L${r.a+22} 40Z"/><circle class="g" cx="${r.a+25}" cy="40" r="3"/>`;
+      W+=`<path class="w" d="M${r.a} 40H${r.a+8}M${r.a+28} 40H${r.c}"/><path class="w rl" d="M${r.c} 40V${yb}"/>`;
+      T+=`<text class="tx" x="${r.c}" y="32">${NAMES[k]}’</text>`;
+    }
+  });
+  el.innerHTML=`<svg viewBox="0 0 ${ox+124} ${yb+16}" role="img" aria-label="${kind.toUpperCase()} circuit">${W}${G}${D}${T}</svg>`;
+}
+
+function compute(){
+  const N=1<<n, ones=[], zeros=[], dcs=[];
+  for(let i=0;i<N;i++) (vals[i]===1?ones:vals[i]===2?dcs:zeros).push(i);
+  const dc=dcs.length?"  d("+dcs.join(",")+")":"";
+  const si=qm(ones,dcs), pi=qm(zeros,dcs);
+  $("#ssop").textContent="F = "+sopText(si);
+  $("#spos").textContent="F = "+posText(pi);
+  drawCircuit(si.map(p=>termOf(p,"0")),"sop","#csvg1");
+  drawCircuit(pi.map(p=>termOf(p,"1")),"pos","#csvg2");
+  const mt=i=>{let s="";for(let k=0;k<n;k++)s+=lit(k,!((i>>(n-1-k))&1));return s};
+  const mx=i=>"("+Array.from({length:n},(_,k)=>lit(k,!!((i>>(n-1-k))&1))).join(" + ")+")";
+  $("#csop").textContent="F = Σm("+ones.join(",")+")"+dc+"\n"+(ones.length?ones.map(mt).join(" + "):"0");
+  $("#cpos").textContent="F = ΠM("+zeros.join(",")+")"+dc+"\n"+(zeros.length?zeros.map(mx).join(""):"1");
+  $("#csop").style.whiteSpace=$("#cpos").style.whiteSpace="pre-wrap";
+}
+
+function renderTable(){
+  $("#th").innerHTML="<tr><th>#</th>"+NAMES.slice(0,n).map(x=>"<th>"+x+"</th>").join("")+"<th>F</th></tr>";
+  let h="";
+  for(let i=0;i<(1<<n);i++){
+    h+='<tr><td class="i">'+i+"</td>"+bits(i,n).split("").map(b=>"<td>"+b+"</td>").join("")+
+      '<td><button data-i="'+i+'" data-v="'+vals[i]+'" aria-label="Row '+i+' output">'+["0","1","X"][vals[i]]+"</button></td></tr>";
+  }
+  $("#tb").innerHTML=h;
+}
+
+function renderSeg(){
+  $("#seg").innerHTML=[2,3,4,5].map(k=>'<button aria-pressed="'+(k===n)+'" data-n="'+k+'">'+k+"</button>").join("");
+}
+function refresh(){renderSeg();renderTable();compute()}
+
+$("#seg").addEventListener("click",e=>{
+  const k=e.target.dataset.n; if(!k) return;
+  n=+k; vals=new Array(32).fill(0); $("#err").textContent=""; refresh();
+});
+$("#tb").addEventListener("click",e=>{
+  const i=e.target.dataset.i; if(i===undefined) return;
+  vals[i]=(vals[i]+1)%3; e.target.dataset.v=vals[i]; e.target.textContent=["0","1","X"][vals[i]]; compute();
+});
+$("#clr").addEventListener("click",()=>{vals=new Array(32).fill(0);$("#err").textContent="";refresh()});
+
+function apply(){
+  const txt=$("#q").value, err=$("#err"), N=1<<n;
+  let m=null, M=null, d=[];
+  const re=/([mMd])\s*\(([^)]*)\)/g; let r, any=false;
+  while((r=re.exec(txt))){
+    any=true;
+    const list=r[2].split(/[,\s]+/).filter(Boolean).map(Number);
+    if(list.some(x=>!Number.isInteger(x)||x<0||x>=N)){err.textContent="Row numbers for "+n+" variables must be whole numbers from 0 to "+(N-1)+".";return}
+    if(r[1]==="m") m=(m||[]).concat(list); else if(r[1]==="M") M=(M||[]).concat(list); else d=d.concat(list);
+  }
+  if(!any){err.textContent="Type something like m(1,3,7) or M(0,2,5).";return}
+  if(m&&M){err.textContent="Use either m(…) or M(…), not both.";return}
+  if(!m&&!M){err.textContent="Add m(…) or M(…) to say which rows are 1 or 0.";return}
+  err.textContent="";
+  vals=new Array(32).fill(m?0:1);
+  (m||M).forEach(i=>vals[i]=m?1:0);
+  d.forEach(i=>vals[i]=2);
+  refresh();
+}
+$("#apply").addEventListener("click",apply);
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter")apply()});
+
+$("#q").value="m(3,5,6,7)"; apply();
+</script>
+</body>
+</html>
