@@ -9,7 +9,7 @@ A single-page web app that turns a truth table (2 to 5 variables) into SOP and P
 - Canonical SOP and POS (as lists and as full expressions)
 - Simplified SOP and POS using Quine-McCluskey with a minimal cover search
 - Circuit diagrams drawn as SVG, with vertical input rails, inverters, and AND/OR gates sized to their inputs
-- Download each circuit as a PNG (black on white, ready for reports)
+- Download each circuit as a PNG or SVG (black on white, ready for reports)
 
 ## Run it
 
