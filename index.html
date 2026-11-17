@@ -45,6 +45,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--on);outline-off
 .board .sm{font:14px/1.5 "IBM Plex Mono",monospace;overflow-wrap:anywhere}
 .board .big .ex{font-size:clamp(24px,4vw,36px)}
 .circ{margin-top:20px}
+.ch{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.ch h2{margin:0}
 .cw{overflow-x:auto}
 .cw svg{display:block;min-width:520px;width:100%;height:auto}
 .w{fill:none;stroke:var(--mute);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
@@ -76,8 +78,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--on);outline-off
 <div class="blk"><div class="lab">Canonical POS</div><div class="sm" id="cpos"></div></div>
 </section>
 </div>
-<section class="card circ"><h2>Circuit for the simplified SOP</h2><div class="cw" id="csvg1"></div></section>
-<section class="card circ"><h2>Circuit for the simplified POS</h2><div class="cw" id="csvg2"></div></section>
+<section class="card circ"><div class="ch"><h2>Circuit for the simplified SOP</h2><button class="clr dl" data-t="#csvg1" data-n="sop-circuit">Download PNG</button></div><div class="cw" id="csvg1"></div></section>
+<section class="card circ"><div class="ch"><h2>Circuit for the simplified POS</h2><button class="clr dl" data-t="#csvg2" data-n="pos-circuit">Download PNG</button></div><div class="cw" id="csvg2"></div></section>
 </div>
 <script>
 const NAMES=["A","B","C","D","E"];
@@ -191,6 +193,25 @@ function drawCircuit(terms,kind,sel){
   });
   el.innerHTML=`<svg viewBox="0 0 ${ox+124} ${yb+16}" role="img" aria-label="${kind.toUpperCase()} circuit">${W}${G}${D}${T}</svg>`;
 }
+
+function downloadPng(sel,name){
+  const svg=$(sel+" svg");
+  if(!svg) return;
+  const vb=svg.viewBox.baseVal, s=3, w=vb.width*s, h=vb.height*s;
+  const c=svg.cloneNode(true);
+  c.setAttribute("xmlns","http://www.w3.org/2000/svg");
+  c.setAttribute("width",w); c.setAttribute("height",h);
+  c.insertAdjacentHTML("afterbegin",'<style>.w{fill:none;stroke:#555;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.rl{stroke:#1F8A63}.g{fill:#fff;stroke:#000;stroke-width:1.5;stroke-linejoin:round}.d{fill:#000}.tx{fill:#000;font:600 13px monospace;text-anchor:middle}</style><rect width="'+vb.width+'" height="'+vb.height+'" fill="#fff"/>');
+  const img=new Image();
+  img.onload=()=>{
+    const cv=document.createElement("canvas");
+    cv.width=w; cv.height=h;
+    cv.getContext("2d").drawImage(img,0,0);
+    cv.toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name+".png";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});
+  };
+  img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(new XMLSerializer().serializeToString(c));
+}
+document.addEventListener("click",e=>{const b=e.target.closest(".dl");if(b)downloadPng(b.dataset.t,b.dataset.n)});
 
 function compute(){
   const N=1<<n, ones=[], zeros=[], dcs=[];
