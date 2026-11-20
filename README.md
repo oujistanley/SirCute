@@ -10,6 +10,7 @@ A single-page web app that turns a truth table (2 to 5 variables) into SOP and P
 - Simplified SOP and POS using Quine-McCluskey with a minimal cover search
 - Circuit diagrams drawn as SVG, with vertical input rails, inverters, and AND/OR gates sized to their inputs
 - Download each circuit as a PNG or SVG (black on white, ready for reports)
+- Custom variable names, like X Y Z or W X Y Z
 
 ## Run it
 
@@ -36,6 +37,5 @@ Everything is in `index.html`:
 
 ## Ideas for later
 
-- Custom variable names
 - Typing an expression to get its truth table
 - Desktop version in C++ reusing the same algorithm
