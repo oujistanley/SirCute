@@ -11,6 +11,7 @@ A single-page web app that turns a truth table (2 to 5 variables) into SOP and P
 - Circuit diagrams drawn as SVG, with vertical input rails, inverters, and AND/OR gates sized to their inputs
 - Download each circuit as a PNG or SVG (black on white, ready for reports)
 - Custom variable names, like X Y Z or W X Y Z
+- Type an expression like `AB + A'C` or `(A+B)(C+D)'` and the truth table is filled in for you (supports + * space ' ^ and brackets)
 
 ## Run it
 
@@ -37,5 +38,4 @@ Everything is in `index.html`:
 
 ## Ideas for later
 
-- Typing an expression to get its truth table
 - Desktop version in C++ reusing the same algorithm

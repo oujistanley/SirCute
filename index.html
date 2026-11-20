@@ -68,6 +68,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--on);outline-off
 <div class="seg" id="seg"></div>
 <label for="vn">Variable names</label>
 <input id="vn" class="vn" value="A B C D E" autocomplete="off" spellcheck="false">
+<label for="ex">Expression</label>
+<div class="q"><input id="ex" placeholder="AB + A'C   or   (A+B)(C+D)'" autocomplete="off" spellcheck="false"><button id="useex">Use</button></div>
+<p class="hint" style="margin:0 0 14px">Use + for OR, a space or * for AND, ' for NOT, ^ for XOR, and brackets.</p>
 <label for="q">Quick entry</label>
 <div class="q"><input id="q" placeholder="m(3,5,6,7)  or  M(0,1,2,4)" autocomplete="off" spellcheck="false"><button id="apply">Apply</button></div>
 <p class="err" id="err" role="alert"></p>
@@ -295,6 +298,59 @@ function applyNames(){
   refresh();
 }
 $("#vn").addEventListener("change",applyNames);
+
+function parseExpr(src){
+  const s=src.replace(/\s+/g,"").replace(/\u2019/g,"'");
+  let p=0,maxk=-1;
+  const fail=m=>{throw new Error(m)};
+  const names=NAMES.slice().sort((a,b)=>b.length-a.length);
+  const starts=()=>{const c=s[p];return c==="("||c==="!"||c==="~"||c==="0"||c==="1"||names.some(x=>s.startsWith(x,p))};
+  function atom(){
+    const c=s[p];
+    if(c==="("){p++;const f=or();if(s[p]!==")")fail("A bracket is not closed.");p++;return f}
+    if(c==="0"||c==="1"){p++;const v=+c;return()=>v}
+    const nm=names.find(x=>s.startsWith(x,p));
+    if(!nm) fail(c?"I don't recognise \""+c+"\". Variables in use: "+NAMES.join(", ")+".":"The expression ends too early.");
+    p+=nm.length;const k=NAMES.indexOf(nm);maxk=Math.max(maxk,k);return v=>v[k];
+  }
+  function unary(){
+    if(s[p]==="!"||s[p]==="~"){p++;const f=unary();return v=>f(v)^1}
+    let f=atom();
+    while(s[p]==="'"){p++;const g=f;f=v=>g(v)^1}
+    return f;
+  }
+  function and(){
+    let f=unary();
+    while(p<s.length){
+      if(s[p]==="*"||s[p]==="\u00b7"||s[p]==="&")p++;else if(!starts())break;
+      const g=unary(),h=f;f=v=>h(v)&g(v);
+    }
+    return f;
+  }
+  function xor(){let f=and();while(s[p]==="^"||s[p]==="\u2295"){p++;const g=and(),h=f;f=v=>h(v)^g(v)}return f}
+  function or(){let f=xor();while(s[p]==="+"||s[p]==="|"){p++;const g=xor(),h=f;f=v=>h(v)|g(v)}return f}
+  if(!s) fail("Type an expression first, like AB + A'C.");
+  const f=or();
+  if(p<s.length) fail("Unexpected \""+s[p]+"\" in the expression.");
+  return {f,maxk};
+}
+function applyExpr(){
+  const err=$("#err");
+  try{
+    const {f,maxk}=parseExpr($("#ex").value);
+    if(maxk>=0) n=Math.min(5,Math.max(2,maxk+1));
+    vals=new Array(32).fill(0);
+    for(let i=0;i<(1<<n);i++){
+      const v=[0,0,0,0,0];
+      for(let k=0;k<n;k++) v[k]=(i>>(n-1-k))&1;
+      vals[i]=f(v)&1;
+    }
+    err.textContent="";
+    refresh();
+  }catch(e){err.textContent=e.message}
+}
+$("#useex").addEventListener("click",applyExpr);
+$("#ex").addEventListener("keydown",e=>{if(e.key==="Enter")applyExpr()});
 
 $("#q").value="m(3,5,6,7)"; apply();
 </script>
