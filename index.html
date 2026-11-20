@@ -286,12 +286,11 @@ function applyNames(){
   const err=$("#err");
   let list=$("#vn").value.trim().split(/[\s,]+/).filter(Boolean);
   if(list.length===1&&/^[A-Za-z]+$/.test(list[0])) list=list[0].split("");
-  if(list.length<n||list.length>5){err.textContent="Enter "+n+" to 5 names, like X Y Z or W,X,Y,Z.";return}
+  if(list.length<n||list.length>5){err.textContent="Enter "+(n===5?"5":n+" to 5")+" names, like X Y Z or W,X,Y,Z.";return}
   if(list.some(s=>!/^[A-Za-z][A-Za-z0-9]?$/.test(s))){err.textContent="Each name must be a letter, optionally followed by one digit (like X or X1).";return}
   if(new Set(list).size!==list.length){err.textContent="Names must be different from each other.";return}
   const fill=["A","B","C","D","E"].filter(s=>!list.includes(s));
   NAMES=list.concat(fill).slice(0,5);
-  $("#vn").value=NAMES.join(" ");
   err.textContent="";
   refresh();
 }
